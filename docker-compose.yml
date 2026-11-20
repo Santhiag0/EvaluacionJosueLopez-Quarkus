@@ -1,0 +1,44 @@
+name: evaluacion-josue-santiago-lopez
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: transferencias
+      MYSQL_USER: transferencias
+      MYSQL_PASSWORD: transferencias
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    ports:
+      - "3317:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    volumes:
+      - transferencias_data:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    environment:
+      DB_JDBC_URL: jdbc:mysql://mysql:3306/transferencias?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=utf8
+      DB_USER: transferencias
+      DB_PASSWORD: transferencias
+    ports:
+      - "8083:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8091:80"
+    depends_on:
+      - backend
+
+volumes:
+  transferencias_data:

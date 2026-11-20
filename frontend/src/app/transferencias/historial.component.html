@@ -1,0 +1,88 @@
+<section class="page">
+  <div class="page-head">
+    <div>
+      <p class="kicker">Consulta</p>
+      <h2>Historial de movimientos</h2>
+    </div>
+  </div>
+
+  <article class="panel">
+    <form [formGroup]="filtros" (ngSubmit)="consultar(0)" class="filters">
+      <mat-form-field appearance="outline">
+        <mat-label>Cuenta origen</mat-label>
+        <mat-select formControlName="cuentaOrigenId">
+          <mat-option [value]="null">Todas</mat-option>
+          <mat-option *ngFor="let cuenta of cuentasDisponibles" [value]="cuenta.id">
+            {{ cuenta.numeroCuenta }} — {{ cuenta.titular }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Cuenta destino</mat-label>
+        <mat-select formControlName="cuentaDestinoId">
+          <mat-option [value]="null">Todas</mat-option>
+          <mat-option *ngFor="let cuenta of cuentasDisponibles" [value]="cuenta.id">
+            {{ cuenta.numeroCuenta }} — {{ cuenta.titular }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="estado">
+          <mat-option value="">Todos</mat-option>
+          <mat-option value="COMPLETADA">Completada</mat-option>
+          <mat-option value="EN_REVISION">En revisión</mat-option>
+          <mat-option value="RECHAZADA">Rechazada</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Desde</mat-label>
+        <input matInput type="date" formControlName="fechaDesde" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Hasta</mat-label>
+        <input matInput type="date" formControlName="fechaHasta" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" type="submit">Consultar</button>
+    </form>
+  </article>
+
+  <article class="panel">
+    <p class="banner error" *ngIf="error">{{ error }}</p>
+    <p class="muted" *ngIf="cargando">Consultando historial…</p>
+    <div class="table-wrap" *ngIf="!error">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Origen</th>
+            <th>Destino</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th>Detalle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let movimiento of resultados">
+            <td>{{ movimiento.fecha | date: 'yyyy-MM-dd HH:mm' : 'America/Guayaquil' }}</td>
+            <td>{{ movimiento.numeroCuentaOrigen }}<br /><span class="muted">{{ movimiento.titularOrigen }}</span></td>
+            <td>{{ movimiento.numeroCuentaDestino }}<br /><span class="muted">{{ movimiento.titularDestino }}</span></td>
+            <td class="numero">{{ dinero(movimiento.monto) }}</td>
+            <td>
+              <span class="pill" [class.warn]="movimiento.estado === 'EN_REVISION'" [class.off]="movimiento.estado === 'RECHAZADA'">
+                {{ etiquetaEstado(movimiento.estado) }}
+              </span>
+            </td>
+            <td>{{ movimiento.motivoSospecha || movimiento.motivoRechazo || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="muted empty" *ngIf="!cargando && resultados.length === 0">No hay movimientos para esos filtros.</p>
+    </div>
+    <div class="pager" *ngIf="totalPaginas > 1">
+      <button mat-stroked-button type="button" (click)="consultar(pagina - 1)" [disabled]="pagina === 0">Anterior</button>
+      <span>Página {{ pagina + 1 }} de {{ totalPaginas }} · {{ total }} movimientos</span>
+      <button mat-stroked-button type="button" (click)="consultar(pagina + 1)" [disabled]="pagina + 1 >= totalPaginas">Siguiente</button>
+    </div>
+  </article>
+</section>

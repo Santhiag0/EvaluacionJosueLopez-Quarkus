@@ -1,0 +1,114 @@
+<section class="page">
+  <div class="page-head">
+    <div>
+      <p class="kicker">Operación</p>
+      <h2>Cuentas bancarias</h2>
+    </div>
+    <button mat-stroked-button type="button" (click)="cargar()" [disabled]="cargando">Actualizar</button>
+  </div>
+
+  <div class="layout">
+    <article class="panel">
+      <header class="panel-head">
+        <h3>Registradas</h3>
+        <p>Ordena por saldo con el encabezado de la columna.</p>
+      </header>
+
+      <p class="banner error" *ngIf="errorListado">{{ errorListado }}</p>
+      <p class="muted" *ngIf="cargando">Cargando cuentas…</p>
+
+      <div class="table-wrap" *ngIf="!errorListado">
+        <table mat-table [dataSource]="datos" matSort matSortActive="saldo" matSortDirection="desc">
+          <ng-container matColumnDef="numeroCuenta">
+            <th mat-header-cell *matHeaderCellDef>Número</th>
+            <td mat-cell *matCellDef="let cuenta">{{ cuenta.numeroCuenta }}</td>
+          </ng-container>
+          <ng-container matColumnDef="titular">
+            <th mat-header-cell *matHeaderCellDef>Titular</th>
+            <td mat-cell *matCellDef="let cuenta">{{ cuenta.titular }}</td>
+          </ng-container>
+          <ng-container matColumnDef="tipo">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let cuenta">{{ etiquetaTipo(cuenta.tipo) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="saldo">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="saldo">Saldo</th>
+            <td mat-cell *matCellDef="let cuenta" class="numero">{{ dinero(cuenta.saldo) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let cuenta">
+              <span class="pill" [class.off]="cuenta.estado === 'INACTIVA'">{{ etiquetaEstadoCuenta(cuenta.estado) }}</span>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+          <tr
+            mat-row
+            *matRowDef="let cuenta; columns: columnas"
+            (click)="elegir(cuenta)"
+            [class.selected]="seleccionada?.id === cuenta.id"
+          ></tr>
+        </table>
+        <p class="muted empty" *ngIf="!cargando && datos.data.length === 0">No hay cuentas registradas.</p>
+      </div>
+    </article>
+
+    <aside class="side">
+      <article class="panel">
+        <header class="panel-head">
+          <h3>Nueva cuenta</h3>
+          <p>Número de 10 dígitos y saldo inicial mayor o igual a cero.</p>
+        </header>
+        <form [formGroup]="alta" (ngSubmit)="registrar()" class="stack">
+          <mat-form-field appearance="outline">
+            <mat-label>Número de cuenta</mat-label>
+            <input matInput formControlName="numeroCuenta" maxlength="10" inputmode="numeric" />
+            <mat-error *ngIf="alta.controls.numeroCuenta.hasError('required')">El número es obligatorio</mat-error>
+            <mat-error *ngIf="alta.controls.numeroCuenta.hasError('pattern')">Debe tener exactamente 10 dígitos</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Titular</mat-label>
+            <input matInput formControlName="titular" maxlength="150" />
+            <mat-error>El titular es obligatorio</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo</mat-label>
+            <mat-select formControlName="tipo">
+              <mat-option value="AHORRO">Ahorro</mat-option>
+              <mat-option value="CORRIENTE">Corriente</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Saldo inicial</mat-label>
+            <input matInput type="number" formControlName="saldoInicial" min="0" step="0.01" />
+            <mat-error>El saldo no puede ser negativo</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Estado</mat-label>
+            <mat-select formControlName="estado">
+              <mat-option value="ACTIVA">Activa</mat-option>
+              <mat-option value="INACTIVA">Inactiva</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button mat-flat-button color="primary" type="submit" [disabled]="enviando">Registrar cuenta</button>
+        </form>
+        <p class="banner ok" *ngIf="mensajeAlta">{{ mensajeAlta }}</p>
+        <p class="banner error" *ngIf="errorAlta">{{ errorAlta }}</p>
+      </article>
+
+      <article class="panel" *ngIf="seleccionada">
+        <header class="panel-head">
+          <h3>Resumen del día</h3>
+          <p>{{ seleccionada.titular }} · {{ seleccionada.numeroCuenta }}</p>
+        </header>
+        <p class="banner error" *ngIf="errorResumen">{{ errorResumen }}</p>
+        <dl class="resumen" *ngIf="resumen">
+          <div><dt>Saldo actual</dt><dd>{{ dinero(resumen.saldoActual) }}</dd></div>
+          <div><dt>Transferido hoy</dt><dd>{{ dinero(resumen.totalTransferidoHoy) }}</dd></div>
+          <div><dt>Transferencias del día</dt><dd>{{ resumen.cantidadTransferenciasDelDia }}</dd></div>
+          <div><dt>Marcadas como sospechosas</dt><dd>{{ resumen.cantidadMarcadasComoSospechosas }}</dd></div>
+        </dl>
+      </article>
+    </aside>
+  </div>
+</section>
