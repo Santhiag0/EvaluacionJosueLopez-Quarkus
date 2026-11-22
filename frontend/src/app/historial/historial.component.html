@@ -1,0 +1,107 @@
+<section class="pagina">
+  <header class="encabezado">
+    <div>
+      <p class="sobre">Consulta</p>
+      <h1>Historial de transferencias</h1>
+    </div>
+  </header>
+
+  <form class="tarjeta filtros" [formGroup]="filtros" (ngSubmit)="consultar()">
+    <mat-form-field appearance="outline">
+      <mat-label>Cuenta origen</mat-label>
+      <mat-select formControlName="cuentaOrigenId">
+        <mat-option [value]="null">Todas</mat-option>
+        @for (cuenta of cuentas; track cuenta.id) {
+          <mat-option [value]="cuenta.id">{{ cuenta.numeroCuenta }} · {{ cuenta.titular }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Cuenta destino</mat-label>
+      <mat-select formControlName="cuentaDestinoId">
+        <mat-option [value]="null">Todas</mat-option>
+        @for (cuenta of cuentas; track cuenta.id) {
+          <mat-option [value]="cuenta.id">{{ cuenta.numeroCuenta }} · {{ cuenta.titular }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Estado</mat-label>
+      <mat-select formControlName="estado">
+        <mat-option value="">Todos</mat-option>
+        <mat-option value="COMPLETADA">Completada</mat-option>
+        <mat-option value="EN_REVISION">En revisión</mat-option>
+        <mat-option value="RECHAZADA">Rechazada</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Desde</mat-label>
+      <input matInput type="date" formControlName="fechaDesde">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Hasta</mat-label>
+      <input matInput type="date" formControlName="fechaHasta">
+    </mat-form-field>
+    <button mat-flat-button color="primary" type="submit">Consultar</button>
+  </form>
+
+  @if (error) {
+    <p class="alerta alerta-error">{{ error }}</p>
+  }
+
+  <section class="tarjeta tabla-tarjeta">
+    <div class="tabla-wrap">
+      <table mat-table [dataSource]="filas">
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let fila">{{ fechaHora(fila.fecha) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="origen">
+          <th mat-header-cell *matHeaderCellDef>Origen</th>
+          <td mat-cell *matCellDef="let fila">
+            <span class="mono">{{ fila.cuentaOrigen.numeroCuenta }}</span>
+            <small>{{ fila.cuentaOrigen.titular }}</small>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="destino">
+          <th mat-header-cell *matHeaderCellDef>Destino</th>
+          <td mat-cell *matCellDef="let fila">
+            <span class="mono">{{ fila.cuentaDestino.numeroCuenta }}</span>
+            <small>{{ fila.cuentaDestino.titular }}</small>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="monto">
+          <th mat-header-cell *matHeaderCellDef>Monto</th>
+          <td mat-cell *matCellDef="let fila" class="numero">{{ dinero(fila.monto) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let fila">
+            <span class="pill"
+              [class.pill-ok]="fila.estado === 'COMPLETADA'"
+              [class.pill-aviso]="fila.estado === 'EN_REVISION'"
+              [class.pill-bad]="fila.estado === 'RECHAZADA'">
+              {{ etiquetaEstado(fila.estado) }}
+            </span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="motivo">
+          <th mat-header-cell *matHeaderCellDef>Detalle</th>
+          <td mat-cell *matCellDef="let fila">{{ fila.motivo || '—' }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+        <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+      </table>
+    </div>
+    @if (!cargando && filas.length === 0 && !error) {
+      <p class="vacio">No hay transferencias con esos filtros.</p>
+    }
+    <mat-paginator
+      [length]="total"
+      [pageIndex]="pagina"
+      [pageSize]="tamano"
+      [pageSizeOptions]="[5, 10, 20]"
+      (page)="cambiarPagina($event)">
+    </mat-paginator>
+  </section>
+</section>

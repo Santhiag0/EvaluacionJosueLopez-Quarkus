@@ -1,0 +1,81 @@
+<section class="pagina">
+  <header class="encabezado">
+    <div>
+      <p class="sobre">Movimiento</p>
+      <h1>Nueva transferencia</h1>
+    </div>
+  </header>
+
+  <div class="rejilla">
+    <form class="tarjeta" [formGroup]="formulario" (ngSubmit)="enviar()">
+      <h2>Datos de la operación</h2>
+      @if (errorCarga) {
+        <p class="alerta alerta-error">{{ errorCarga }}</p>
+      }
+      <mat-form-field appearance="outline">
+        <mat-label>Cuenta origen</mat-label>
+        <mat-select formControlName="cuentaOrigenId">
+          @for (cuenta of cuentas; track cuenta.id) {
+            <mat-option [value]="cuenta.id" [disabled]="cuenta.estado !== 'ACTIVA'">{{ etiqueta(cuenta) }}</mat-option>
+          }
+        </mat-select>
+        @if (errorCampo('cuentaOrigenId'); as texto) {
+          <mat-error>{{ texto }}</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Cuenta destino</mat-label>
+        <mat-select formControlName="cuentaDestinoId">
+          @for (cuenta of cuentas; track cuenta.id) {
+            <mat-option [value]="cuenta.id" [disabled]="cuenta.estado !== 'ACTIVA'">{{ etiqueta(cuenta) }}</mat-option>
+          }
+        </mat-select>
+        @if (errorCampo('cuentaDestinoId'); as texto) {
+          <mat-error>{{ texto }}</mat-error>
+        }
+      </mat-form-field>
+      @if (formulario.hasError('mismaCuenta') && (formulario.controls.cuentaOrigenId.touched || formulario.controls.cuentaDestinoId.touched)) {
+        <p class="alerta alerta-error">La cuenta origen debe ser diferente de la cuenta destino.</p>
+      }
+      <mat-form-field appearance="outline">
+        <mat-label>Monto</mat-label>
+        <input matInput type="number" formControlName="monto" min="0.01" step="0.01">
+        @if (errorCampo('monto'); as texto) {
+          <mat-error>{{ texto }}</mat-error>
+        }
+      </mat-form-field>
+      @if (error) {
+        <p class="alerta alerta-error">{{ error }}</p>
+      }
+      @if (resultado) {
+        <div class="alerta" [class.alerta-ok]="resultado.estado === 'COMPLETADA'" [class.alerta-aviso]="resultado.estado === 'EN_REVISION'">
+          <strong>
+            {{ resultado.estado === 'EN_REVISION' ? 'Transferencia registrada y marcada para revisión.' : 'Transferencia completada.' }}
+          </strong>
+          <span>
+            {{ dinero(resultado.monto) }} de {{ resultado.cuentaOrigen.numeroCuenta }} hacia {{ resultado.cuentaDestino.numeroCuenta }}.
+            Saldo origen {{ dinero(resultado.cuentaOrigen.saldoActual) }}.
+            Saldo destino {{ dinero(resultado.cuentaDestino.saldoActual) }}.
+          </span>
+          @if (resultado.motivo) {
+            <span>{{ resultado.motivo }}</span>
+          }
+        </div>
+      }
+      <button mat-flat-button color="primary" type="submit" [disabled]="enviando">
+        {{ enviando ? 'Enviando…' : 'Transferir' }}
+      </button>
+    </form>
+
+    <aside class="tarjeta reglas">
+      <h2>Reglas que aplica el banco</h2>
+      <ol>
+        <li>Las dos cuentas deben existir y estar activas.</li>
+        <li>El monto tiene que ser mayor a cero y la origen debe alcanzar.</li>
+        <li>Nadie puede girar más de $10,000 en el día. Si no alcanza, la respuesta dice cuánto queda.</li>
+        <li>Supera $5,000, o es la sexta salida de la última hora: el dinero se mueve y la operación queda en revisión.</li>
+        <li>Si algo falla, no se mueve ningún saldo.</li>
+      </ol>
+    </aside>
+  </div>
+</section>
